@@ -15,6 +15,7 @@ class XMLMODELS:
                             <xsd:element name="position" type="xsd:string" />
                             <xsd:element name="age" type="xsd:integer" />
                             <xsd:element name="image" type="xsd:base64Binary" />
+                            <xsd:element name="password" type="xsd:string" />
                         </xsd:sequence>
                     </xsd:complexType>
                 </xsd:schema>
