@@ -26,8 +26,12 @@ def index():
     return "EJEMPLO DE UNA API REST FULL CON PYTHON+FLASK+PONY (table 'user' methods==> get, post, patch, delete)"
 
 @app.errorhandler(404)
-def page_not_found(error):
-    return jsonify({"success": False, "message": "No data found"}), status.HTTP_404_NOT_FOUND
+def not_found(error):
+    return jsonify({"success": False, "message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}), status.HTTP_404_NOT_FOUND
+
+@app.errorhandler(405)
+def not_allowed(error):
+    return jsonify({"success": False, "message": "The method is not allowed for the requested URL."}), status.HTTP_405_METHOD_NOT_ALLOWED
 
 api.add_resource(Users, '/api/users')
 api.add_resource(UserItem,'/api/users/<int:id>')

@@ -22,5 +22,4 @@ db.bind('mysql', host='localhost', user='root', passwd='', db='test')
 from app.models.user import User
 orm.sql_debug(True)
 db.generate_mapping(create_tables=True)
-
 from app.routes import app

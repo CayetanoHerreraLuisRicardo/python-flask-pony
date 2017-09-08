@@ -14,7 +14,7 @@ class GENERALFUNCTIONS:
                     with Image.open(fh) as image:
                         image.thumbnail(maxsize, PIL.Image.ANTIALIAS)
                         image.save(filename)
-            data = {"success": True}
+            data = {"success": True, "message": "successful operation"}
         except Exception as e:
             data = {"success": False, "message": str(e)}
             print (e)

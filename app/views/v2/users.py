@@ -54,6 +54,7 @@ class Users(Resource):
                 return result, status.HTTP_200_OK
             else:
                 return result, status.HTTP_202_ACCEPTED
+
     'Crear un usuario nuevo'
     def post(self):
         if request.headers['Content-Type'] == 'application/xml':
@@ -79,36 +80,43 @@ class Users(Resource):
 
 #       AUNQUE SEA XML EL FORMATO ORIGINAL, SE USARÁ EL FORMATO JSON(MAS FACIL DE MANIPULAR Y AHORRAR LINEAS DE CÓDIGO) Y CON 'dicttoxml' LO CONVERTIMOS EN XML
         parse = info['data']
+        result = {"success": True, "message": "successful operation"}
         if parse.get('image') is not None:
-            if 'image' in parse:
-                try:
-                    imgdata = base64.b64decode(parse['image'])
-                except Exception as e:
-                    return {"success": False, "message": "formato de imagen en base64 incorrecta"}, status.HTTP_202_ACCEPTED
-                file = parse['name'] + ".png"
-                saveImg = GENERALFUNCTIONS.save_resize_image(file, imgdata)
-                if saveImg.get('success') is False:
-                    return saveImg, status.HTTP_202_ACCEPTED
+            try:
+                imgdata = base64.b64decode(parse['image'])
+            except Exception as e:
+                result =  {"success": False, "message": "formato de imagen en base64 incorrecta"}
+            file = parse['name'] + ".png"
+            saveImg = GENERALFUNCTIONS.save_resize_image(file, imgdata)
+            result = saveImg
         else:
             file = "default.png"
-        try:
-            with orm.db_session:
-                User(
-                    name=parse['name'],
-                    email=parse['email'],
-                    position=parse['position'],
-                    age=parse['age'],
-                    image=file,
-                    password=parse['password']
-                )
-            result = {"success": True, "message": "successful operation"}
-        except Exception as e:
-            result = {"success": False, "message": str(e)}
+        
+        if result.get('success') is True:
+            try:
+                with orm.db_session:
+                    User(
+                        name=parse['name'],
+                        email=parse['email'],
+                        position=parse['position'],
+                        age=parse['age'],
+                        image=file,
+                        password=parse['password']
+                    )
+                result = {"success": True, "message": "successful operation"}
+            except Exception as e:
+                result = {"success": False, "message": str(e)}
 
         if request.headers['Content-Type'] == 'application/xml':
-            return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_202_ACCEPTED)
+            if result.get('success') is True:
+                return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_200_OK)
+            else:
+                return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_202_ACCEPTED)
         elif request.headers['Content-Type'] == 'application/json':
-            return result, status.HTTP_200_OK
+            if result.get('success') is True:
+                return result, status.HTTP_200_OK
+            else:
+                return result, status.HTTP_202_ACCEPTED
 
 class UserItem(Resource):
     'Optener los datos de un usuario por id'
@@ -155,51 +163,64 @@ class UserItem(Resource):
                 info = json.loads(request.data)
             except Exception:
                 return {"success": False, "message": "Json mal construido"}, status.HTTP_202_ACCEPTED
-        try:
-            print(info)
-            with orm.db_session:
-                # user = User[id] #ObjectNotFound exception if object with such primary key doesn't exist.
-                user = User.get(id=int(id)) #If no object is found, get() returns None.
-                if user:
-                    parse = info['data']
-                    modImage = False
 
-                    if 'image' in parse:
-                        try:
-                            imgdata = base64.b64decode(parse['image'])
-                        except Exception as e:
-                            return {"success": False, "message": "formato de imagen en base64 incorrecta"}, status.HTTP_202_ACCEPTED
-                        file = parse['name'] +".png"
-                        saveImg = GENERALFUNCTIONS.save_resize_image(file,imgdata)
-                        if saveImg.get('success') is False:
-                            return saveImg, status.HTTP_202_ACCEPTED
-                        else:
+        result = {"success": True}
+        with orm.db_session:
+            # user = User[id] #ObjectNotFound exception if object with such primary key doesn't exist.
+            user = User.get(id=int(id)) #If no object is found, get() returns None.
+            if user:
+                parse = info['data']
+                modImage = False
+                if parse.get('image') is not None:
+                    try:
+                        imgdata = base64.b64decode(parse['image'])
+                        print("************ + *****************")
+                    except Exception as e:
+                        result = {"success": False, "message": "formato de imagen en base64 incorrecta"}
+
+                    if result.get('success') is True:
+                        file = parse['name'] + ".png"
+                        saveImg = GENERALFUNCTIONS.save_resize_image(file, imgdata)
+                        result = saveImg
+                        if saveImg.get('success') is True:
                             modImage = True
                         if parse['name'] != user.name and user.image != "default.png":
-                            os.remove(os.getcwd()+"\\app\\images\\"+user.name+".png")
-                    try:
-                        with orm.db_session:
-                            user = User[int(id)]
-                            if modImage:
-                                fileMod = file
-                            else:
-                                fileMod = user.image
+                            os.remove(os.getcwd() + "\\app\\images\\" + user.name + ".png")
+                else:
+                    file = "default.png"
+                    modImage = True
+                    os.remove(os.getcwd() + "\\app\\images\\" + user.name + ".png")
 
-                            user.set(
+                try:
+                    with orm.db_session:
+                        user = User[int(id)]
+                        if modImage:
+                            fileMod = file
+                        else:
+                            fileMod = user.image
+
+                        user.set(
                                 name=parse['name'],
                                 email=parse['email'],
                                 position=parse['position'],
                                 age=parse['age'],
                                 image=fileMod
-                            )
-                            return {"success": True, "message": "successful operation"}, status.HTTP_200_OK
-                    except Exception as e:
-                        return {"success": False, "message": str(e)}, status.HTTP_202_ACCEPTED
-                else:
-                    return {"status":False, "message":"Resource not found"}, status.HTTP_202_ACCEPTED
-
-        except Exception as e:
-            return {"success": False, "message": str(e)}, status.HTTP_202_ACCEPTED
+                        )
+                        result = {"success": True, "message": "successful operation"}
+                except Exception as e:
+                    result = {"success": False, "message": str(e)}
+            else:
+                result = {"status":False, "message":"Resource not found"}
+        if request.headers['Content-Type'] == 'application/xml':
+            if result.get('success') is True:
+                return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_200_OK)
+            else:
+                return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_202_ACCEPTED)
+        elif request.headers['Content-Type'] == 'application/json':
+            if result.get('success') is True:
+                return result, status.HTTP_200_OK
+            else:
+                return result, status.HTTP_202_ACCEPTED
 
     'Eliminar un usuario por id'
     @jwt_required()
@@ -212,7 +233,18 @@ class UserItem(Resource):
                     if user.image != "default.png":
                         os.remove(os.getcwd()+"\\app\\images\\"+user.image)
                 else:
-                    return {"status":False, "message":"Resource not found"}
-                return {"success": True, "message": "successful operation"}, status.HTTP_200_OK
+                    result = {"status":False, "message":"Resource not found"}
+                result = {"success": True, "message": "successful operation"}
         except Exception as e:
-            return {"success": False, "message": str(e)}, status.HTTP_202_ACCEPTED
+            result = {"success": False, "message": str(e)}, status.HTTP_202_ACCEPTED
+            
+        if request.headers['Content-Type'] == 'application/xml':
+            if result.get('success') is True:
+                return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_200_OK)
+            else:
+                return Response(dicttoxml.dicttoxml(result), mimetype='application/xml', status=status.HTTP_202_ACCEPTED)
+        elif request.headers['Content-Type'] == 'application/json':
+            if result.get('success') is True:
+                return result, status.HTTP_200_OK
+            else:
+                return result, status.HTTP_202_ACCEPTED
