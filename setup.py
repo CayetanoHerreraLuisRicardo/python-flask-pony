@@ -10,13 +10,13 @@ setup (
 
        # Fill in these to make your Egg ready for upload to
        # PyPI
-       author='Bioxor',
-       author_email='',
+       author='Ricardo Cayetano',
+       author_email='richych92@gmail.com',
 
        #summary = 'Just another Python package for the cheese shop',
-       url='',
-       license='',
-       long_description='Long description of the package',
+       url='https://about.me/richy_92',
+       license='ISC',
+       long_description=' EXAMPLE API REST IN PYTHON',
 
        # could also include long_description, download_url, classifiers, etc.
 
