@@ -6,6 +6,6 @@ xmltodict==0.10.2
 pony==0.7.2
 Flask_Cors==3.0.3
 Flask==0.12.2
-setuptools==34.3.1
+setuptools==65.5.1
 Flask_API==0.6.9
 Pillow==4.2.1
